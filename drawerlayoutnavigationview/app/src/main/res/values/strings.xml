@@ -1,4 +1,12 @@
 <resources>
     <string name="app_name">DrawerLayoutNavigationView</string>
     <string name="main_content_tag">Main Content</string>
+    <string name="menu_item_1">Item 1</string>
+    <string name="menu_item_2">Item 2</string>
+    <string name="menu_item_3">Item 3</string>
+    <string name="menu_item_4">Item 4</string>
+    <string name="menu_item_5">Item 5</string>
+    <string name="menu_item_6">Item 6</string>
+    <string name="menu_item_7">Item 7</string>
+    <string name="menu_group_3_title">Third Group</string>
 </resources>
