@@ -9,4 +9,6 @@
     <string name="menu_item_6">Item 6</string>
     <string name="menu_item_7">Item 7</string>
     <string name="menu_group_3_title">Third Group</string>
+    <string name="open_drawer">Open drawer</string>
+    <string name="close_drawer">Close drawer</string>
 </resources>
