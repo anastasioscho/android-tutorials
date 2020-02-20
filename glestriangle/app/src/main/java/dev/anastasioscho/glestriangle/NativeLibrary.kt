@@ -3,7 +3,7 @@ package dev.anastasioscho.glestriangle
 class NativeLibrary {
     companion object {
         init {
-            System.loadLibrary("my-library")
+            System.loadLibrary("native-library")
         }
     }
 
