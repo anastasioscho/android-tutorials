@@ -4,9 +4,173 @@
 
 #include <jni.h>
 #include <GLES3/gl3.h>
+#include <android/log.h>
+#include <malloc.h>
+
+#define LOG_TAG "native-library"
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
+bool linkProgram(GLuint program);
+bool validateProgram(GLuint program);
+
+static const GLchar vertexShaderSource[] =
+        "#version 310 es\n"
+        "layout (location = 0) in vec3 pos;\n"
+        "void main()\n"
+        "{\n"
+        "gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);\n"
+        "}\n";
+
+static const GLchar fragmentShaderSource[] =
+        "#version 310 es\n"
+        "precision mediump float;\n"
+        "out vec4 color;\n"
+        "void main()\n"
+        "{\n"
+        "color = vec4(1.0, 0.0, 0.0, 1.0);\n"
+        "}\n";
+
+GLuint program, triangleVAO, triangleVBO;
+
+GLuint loadShader(GLenum shaderType, const GLchar* shaderSource) {
+    GLuint shader = glCreateShader(shaderType);
+
+    if (shader) {
+        glShaderSource(shader, 1, &shaderSource, NULL);
+        glCompileShader(shader);
+
+        GLint compileStatus = GL_FALSE;
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &compileStatus);
+
+        if (!compileStatus) {
+            GLint infoLogLength = 0;
+            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLogLength);
+
+            if (infoLogLength > 0) {
+                GLchar* infoLogBuffer = (GLchar*) malloc(static_cast<size_t>(infoLogLength));
+
+                if (infoLogBuffer != NULL) {
+                    glGetShaderInfoLog(shader, infoLogLength, NULL, infoLogBuffer);
+                    LOGE("Could not compile the shader %d: %s", shaderType, infoLogBuffer);
+                    free(infoLogBuffer);
+                }
+            }
+
+            glDeleteShader(shader);
+            shader = 0;
+        }
+    }
+
+    return shader;
+}
+
+void createProgram() {
+    program = 0;
+
+    GLuint vertexShader = loadShader(GL_VERTEX_SHADER, vertexShaderSource);
+    GLuint fragmentShader = loadShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
+
+    if (!vertexShader || !fragmentShader) {
+        LOGE("Could not create the program: vertex or fragment shader failed to compile");
+        return;
+    }
+
+    program = glCreateProgram();
+
+    if (program) {
+        glAttachShader(program, vertexShader);
+        glAttachShader(program, fragmentShader);
+
+        if (!linkProgram(program) || !validateProgram(program)) {
+            LOGE("Could not create the program: program link or validation failed");
+            glDeleteProgram(program);
+            program = 0;
+        }
+    }
+
+    return;
+}
+
+bool linkProgram(GLuint program) {
+    glLinkProgram(program);
+
+    GLint linkStatus = GL_FALSE;
+    glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
+
+    if (!linkStatus) {
+        GLint infoLogLength = 0;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
+
+        if (infoLogLength > 0) {
+            GLchar* infoLogBuffer = (GLchar*) malloc(static_cast<size_t >(infoLogLength));
+
+            if (infoLogBuffer != NULL) {
+                glGetProgramInfoLog(program, infoLogLength, NULL, infoLogBuffer);
+                LOGE("Could not link the program: %s", infoLogBuffer);
+                free(infoLogBuffer);
+            }
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
+bool validateProgram(GLuint program) {
+    glValidateProgram(program);
+
+    GLint validateStatus = GL_FALSE;
+    glGetProgramiv(program, GL_VALIDATE_STATUS, &validateStatus);
+
+    if (validateStatus != GL_TRUE) {
+        GLint infoLogLength = 0;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
+
+        if (infoLogLength) {
+            GLchar* infoLogBuffer = (GLchar*) malloc(infoLogLength);
+
+            if (infoLogBuffer) {
+                glGetProgramInfoLog(program, infoLogLength, NULL, infoLogBuffer);
+                LOGE("Could not validate the program: %s", infoLogBuffer);
+                free(infoLogBuffer);
+            }
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
+void createTriangle() {
+    GLfloat vertices[] = {
+            -1.0f, -1.0f, 0.0f,
+            1.0f, -1.0f, 0.0f,
+            0.0f, 1.0f, 0.0f
+    };
+
+    glGenVertexArrays(1, &triangleVAO);
+    glBindVertexArray(triangleVAO);
+
+    glGenBuffers(1, &triangleVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
+    glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(GL_FLOAT), vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    return;
+}
 
 extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibrary_nOnSurfaceCreated(JNIEnv * env, jobject obj) {
     glClearColor(0.0, 1.0, 0.0, 1.0);
+
+    createProgram();
+    createTriangle();
 
     return;
 }
@@ -19,6 +183,14 @@ extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibr
 
 extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibrary_nOnDrawFrame(JNIEnv * env, jobject obj) {
     glClear(GL_COLOR_BUFFER_BIT);
+
+    glUseProgram(program);
+
+    glBindVertexArray(triangleVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBindVertexArray(0);
+
+    glUseProgram(0);
 
     return;
 }
