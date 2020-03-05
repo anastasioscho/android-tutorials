@@ -6,6 +6,9 @@
 #include <GLES3/gl3.h>
 #include <android/log.h>
 #include <malloc.h>
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 #define LOG_TAG "native-library"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
@@ -16,9 +19,10 @@ bool validateProgram(GLuint program);
 static const GLchar vertexShaderSource[] =
         "#version 310 es\n"
         "layout (location = 0) in vec3 pos;\n"
+        "uniform mat4 model;\n"
         "void main()\n"
         "{\n"
-        "gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);\n"
+        "gl_Position = model * vec4(0.4 * pos.x, 0.4 * pos.y, pos.z, 1.0);\n"
         "}\n";
 
 static const GLchar fragmentShaderSource[] =
@@ -31,6 +35,12 @@ static const GLchar fragmentShaderSource[] =
         "}\n";
 
 GLuint program, triangleVAO, triangleVBO;
+GLint uniformModel;
+
+bool movingRight = true;
+float movingOffset = 0.0f;
+float movingMaxOffset = 0.5f;
+float movingStep = 0.015f;
 
 GLuint loadShader(GLenum shaderType, const GLchar* shaderSource) {
     GLuint shader = glCreateShader(shaderType);
@@ -87,6 +97,8 @@ void createProgram() {
             program = 0;
         }
     }
+
+    uniformModel = glGetUniformLocation(program, "model");
 
     return;
 }
@@ -185,6 +197,15 @@ extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibr
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(program);
+
+    movingRight ? movingOffset += movingStep : movingOffset -= movingStep;
+    if (abs(movingOffset) >= movingMaxOffset) {
+        movingRight = !movingRight;
+    }
+
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(movingOffset, 0.0f, 0.0f));
+    glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 
     glBindVertexArray(triangleVAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
