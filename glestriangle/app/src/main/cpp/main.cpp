@@ -22,7 +22,7 @@ static const GLchar vertexShaderSource[] =
         "uniform mat4 model;\n"
         "void main()\n"
         "{\n"
-        "gl_Position = model * vec4(0.4 * pos.x, 0.4 * pos.y, pos.z, 1.0);\n"
+        "gl_Position = model * vec4(pos, 1.0);\n"
         "}\n";
 
 static const GLchar fragmentShaderSource[] =
@@ -206,6 +206,7 @@ extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibr
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(movingOffset, 0.0f, 0.0f));
     model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
     glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 
     glBindVertexArray(triangleVAO);
