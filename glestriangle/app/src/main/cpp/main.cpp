@@ -37,7 +37,7 @@ static const GLchar fragmentShaderSource[] =
         "color = vColor;\n"
         "}\n";
 
-GLuint program, triangleVAO, triangleVBO;
+GLuint program, triangleVAO, triangleVBO, triangleIBO;
 GLint uniformModel;
 
 float currentAngle = 0.0f;
@@ -157,14 +157,26 @@ bool validateProgram(GLuint program) {
 }
 
 void createTriangle() {
+    GLuint indices[] = {
+            0, 3, 1,
+            1, 3, 2,
+            2, 3, 0,
+            0, 1, 2
+    };
+
     GLfloat vertices[] = {
             -1.0f, -1.0f, 0.0f,
+            0.0f, -1.0f, 1.0f,
             1.0f, -1.0f, 0.0f,
             0.0f, 1.0f, 0.0f
     };
 
     glGenVertexArrays(1, &triangleVAO);
     glBindVertexArray(triangleVAO);
+
+    glGenBuffers(1, &triangleIBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleIBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     glGenBuffers(1, &triangleVBO);
     glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
@@ -174,6 +186,7 @@ void createTriangle() {
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
     return;
@@ -208,7 +221,9 @@ extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibr
     glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 
     glBindVertexArray(triangleVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleIBO);
+    glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
     glUseProgram(0);
