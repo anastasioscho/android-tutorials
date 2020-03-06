@@ -195,6 +195,8 @@ void createTriangle() {
 extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibrary_nOnSurfaceCreated(JNIEnv * env, jobject obj) {
     glClearColor(0.0, 1.0, 0.0, 1.0);
 
+    glEnable(GL_DEPTH_TEST);
+
     createProgram();
     createTriangle();
 
@@ -208,7 +210,7 @@ extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibr
 }
 
 extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibrary_nOnDrawFrame(JNIEnv * env, jobject obj) {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUseProgram(program);
 
