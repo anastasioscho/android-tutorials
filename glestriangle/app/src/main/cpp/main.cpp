@@ -40,10 +40,8 @@ static const GLchar fragmentShaderSource[] =
 GLuint program, triangleVAO, triangleVBO;
 GLint uniformModel;
 
-bool movingRight = true;
-float movingOffset = 0.0f;
-float movingMaxOffset = 0.5f;
-float movingStep = 0.015f;
+float currentAngle = 0.0f;
+float angleStep = 1.0f;
 
 GLuint loadShader(GLenum shaderType, const GLchar* shaderSource) {
     GLuint shader = glCreateShader(shaderType);
@@ -201,14 +199,11 @@ extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibr
 
     glUseProgram(program);
 
-    movingRight ? movingOffset += movingStep : movingOffset -= movingStep;
-    if (abs(movingOffset) >= movingMaxOffset) {
-        movingRight = !movingRight;
-    }
+    currentAngle += angleStep;
+    if (currentAngle >= 360.0f) currentAngle -= 360.0f;
 
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(movingOffset, 0.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::rotate(model, glm::radians(currentAngle), glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
     glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 
