@@ -158,17 +158,18 @@ bool validateProgram(GLuint program) {
 
 void createTriangle() {
     GLuint indices[] = {
-            0, 3, 1,
-            1, 3, 2,
-            2, 3, 0,
-            0, 1, 2
+            0, 1, 2,
+            0, 2, 3,
+            0, 3, 4,
+            0, 4, 1
     };
 
     GLfloat vertices[] = {
-            -1.0f, -1.0f, 0.0f,
-            0.0f, -1.0f, 1.0f,
-            1.0f, -1.0f, 0.0f,
-            0.0f, 1.0f, 0.0f
+            0.0f, 1.0f, 0.0f,
+            -1.0f, -1.0f, 1.0f,
+            1.0f, -1.0f, 1.0f,
+            1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f, -1.0f
     };
 
     glGenVertexArrays(1, &triangleVAO);
@@ -180,7 +181,7 @@ void createTriangle() {
 
     glGenBuffers(1, &triangleVBO);
     glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
-    glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(GL_FLOAT), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 15 * sizeof(GL_FLOAT), vertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
