@@ -19,19 +19,22 @@ bool validateProgram(GLuint program);
 static const GLchar vertexShaderSource[] =
         "#version 310 es\n"
         "layout (location = 0) in vec3 pos;\n"
+        "out vec4 vColor;\n"
         "uniform mat4 model;\n"
         "void main()\n"
         "{\n"
         "gl_Position = model * vec4(pos, 1.0);\n"
+        "vColor = vec4(clamp(pos, 0.0, 1.0), 1.0);\n"
         "}\n";
 
 static const GLchar fragmentShaderSource[] =
         "#version 310 es\n"
         "precision mediump float;\n"
+        "in vec4 vColor;\n"
         "out vec4 color;\n"
         "void main()\n"
         "{\n"
-        "color = vec4(1.0, 0.0, 0.0, 1.0);\n"
+        "color = vColor;\n"
         "}\n";
 
 GLuint program, triangleVAO, triangleVBO;
