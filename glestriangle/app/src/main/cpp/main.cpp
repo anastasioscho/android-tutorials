@@ -220,7 +220,7 @@ extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibr
 
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::rotate(model, glm::radians(currentAngle), glm::vec3(0.0f, 1.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
+    model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
     glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 
     glBindVertexArray(triangleVAO);
