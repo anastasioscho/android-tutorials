@@ -23,9 +23,10 @@ static const GLchar vertexShaderSource[] =
         "out vec4 vColor;\n"
         "uniform mat4 model;\n"
         "uniform mat4 projection;\n"
+        "uniform mat4 view;\n"
         "void main()\n"
         "{\n"
-        "gl_Position = projection * model * vec4(pos, 1.0);\n"
+        "gl_Position = projection * view * model * vec4(pos, 1.0);\n"
         "vColor = vec4(clamp(pos, 0.0, 1.0), 1.0);\n"
         "}\n";
 
@@ -40,7 +41,7 @@ static const GLchar fragmentShaderSource[] =
         "}\n";
 
 GLuint program, triangleVAO, triangleVBO, triangleIBO;
-GLint uniformModel, uniformProjection;
+GLint uniformModel, uniformProjection, uniformView;
 glm::mat4 projectionMatrix;
 
 float currentAngle = 0.0f;
@@ -104,6 +105,7 @@ void createProgram() {
 
     uniformModel = glGetUniformLocation(program, "model");
     uniformProjection = glGetUniformLocation(program, "projection");
+    uniformView = glGetUniformLocation(program, "view");
 
     return;
 }
@@ -229,6 +231,13 @@ extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibr
     model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
     glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
+    glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 2.5f);
+    glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+    glm::mat4 viewMatrix = glm::lookAt(cameraPosition, cameraTarget, worldUp);
+    glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
     glBindVertexArray(triangleVAO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleIBO);
