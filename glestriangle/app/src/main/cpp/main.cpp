@@ -232,7 +232,10 @@ extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibr
     glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
-    glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 2.5f);
+    float camX = sin(glm::radians(currentAngle)) * 2.5f;
+    float camZ = cos(glm::radians(currentAngle)) * 2.5f;
+
+    glm::vec3 cameraPosition = glm::vec3(camX, 0.0f, camZ);
     glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
