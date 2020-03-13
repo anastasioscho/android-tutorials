@@ -232,7 +232,7 @@ extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibr
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_image_width, texture_image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image_data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture_image_width, texture_image_height, 0, GL_RGB, GL_UNSIGNED_BYTE, texture_image_data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     glBindTexture(GL_TEXTURE_2D, 0);
