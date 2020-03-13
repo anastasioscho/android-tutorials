@@ -24,7 +24,9 @@ bool validateProgram(GLuint program);
 static const GLchar vertexShaderSource[] =
         "#version 310 es\n"
         "layout (location = 0) in vec3 pos;\n"
+        "layout (location = 1) in vec2 texCoords;\n"
         "out vec4 vColor;\n"
+        "out vec2 vTexCoords;\n"
         "uniform mat4 model;\n"
         "uniform mat4 projection;\n"
         "uniform mat4 view;\n"
@@ -32,16 +34,19 @@ static const GLchar vertexShaderSource[] =
         "{\n"
         "gl_Position = projection * view * model * vec4(pos, 1.0);\n"
         "vColor = vec4(clamp(pos, 0.0, 1.0), 1.0);\n"
+        "vTexCoords = texCoords;\n"
         "}\n";
 
 static const GLchar fragmentShaderSource[] =
         "#version 310 es\n"
         "precision mediump float;\n"
         "in vec4 vColor;\n"
+        "in vec2 vTexCoords;\n"
         "out vec4 color;\n"
+        "uniform sampler2D textureSampler;\n"
         "void main()\n"
         "{\n"
-        "color = vColor;\n"
+        "color = texture(textureSampler, vTexCoords);\n"
         "}\n";
 
 GLuint program, triangleVAO, triangleVBO, triangleIBO, texture;
@@ -267,6 +272,9 @@ extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibr
 
     glm::mat4 viewMatrix = glm::lookAt(cameraPosition, cameraTarget, worldUp);
     glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
 
     glBindVertexArray(triangleVAO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleIBO);
