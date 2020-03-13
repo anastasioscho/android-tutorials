@@ -44,7 +44,7 @@ static const GLchar fragmentShaderSource[] =
         "color = vColor;\n"
         "}\n";
 
-GLuint program, triangleVAO, triangleVBO, triangleIBO;
+GLuint program, triangleVAO, triangleVBO, triangleIBO, texture;
 GLint uniformModel, uniformProjection, uniformView;
 glm::mat4 projectionMatrix;
 
@@ -215,6 +215,20 @@ extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibr
 
     createProgram();
     createTriangle();
+
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_image_width, texture_image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image_data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    stbi_image_free(texture_image_data);
 
     return;
 }
