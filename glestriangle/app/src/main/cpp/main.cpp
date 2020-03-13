@@ -2,6 +2,10 @@
 // Created by Anastasios Chondrogiannis on 2020-02-20.
 //
 
+#define STB_IMAGE_IMPLEMENTATION
+
+#import "stb_image.h"
+#include <string>
 #include <jni.h>
 #include <GLES3/gl31.h>
 #include <android/log.h>
@@ -43,6 +47,11 @@ static const GLchar fragmentShaderSource[] =
 GLuint program, triangleVAO, triangleVBO, triangleIBO;
 GLint uniformModel, uniformProjection, uniformView;
 glm::mat4 projectionMatrix;
+
+unsigned char *texture_image_data;
+int texture_image_width;
+int texture_image_height;
+int texture_image_depth;
 
 float currentAngle = 0.0f;
 float angleStep = 1.0f;
@@ -249,6 +258,24 @@ extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibr
     glBindVertexArray(0);
 
     glUseProgram(0);
+
+    return;
+}
+
+extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibrary_loadTextureImageFile(JNIEnv * env, jobject obj, jstring aFilesDir) {
+    const char *files_dir_UTF_chars = env->GetStringUTFChars(aFilesDir, NULL);
+
+    std::string files_dir(files_dir_UTF_chars);
+
+    env->ReleaseStringUTFChars(aFilesDir, files_dir_UTF_chars);
+
+    std::string texture_image_file_path = files_dir + "/texture-wood.jpg";
+
+    texture_image_data = stbi_load(texture_image_file_path.c_str(), &texture_image_width, &texture_image_height, &texture_image_depth, 0);
+
+    if (!texture_image_data) {
+        LOGE("Failed to load texture image file: %s", texture_image_file_path.c_str());
+    }
 
     return;
 }

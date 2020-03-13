@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity
 import java.io.File
 
 class MainActivity: AppCompatActivity() {
+    private val nativeLibrary = NativeLibrary()
+
     private lateinit var customGLSurfaceView: CustomGLSurfaceView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -15,6 +17,7 @@ class MainActivity: AppCompatActivity() {
         customGLSurfaceView = findViewById(R.id.customGLSurfaceView)
 
         extractFiles()
+        nativeLibrary.loadTextureImageFile(filesDir.absolutePath)
     }
 
     private fun extractFiles() {
