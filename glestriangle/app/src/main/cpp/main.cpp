@@ -52,7 +52,8 @@ static const GLchar fragmentShaderSource[] =
         "uniform DirectionalLight directionalLight;\n"
         "void main()\n"
         "{\n"
-        "color = texture(textureSampler, vTexCoords);\n"
+        "vec4 ambientColor = vec4(directionalLight.color, 1.0f) * directionalLight.intensity;\n"
+        "color = texture(textureSampler, vTexCoords) * ambientColor;\n"
         "}\n";
 
 GLuint program, triangleVAO, triangleVBO, triangleIBO, texture;
