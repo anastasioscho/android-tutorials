@@ -25,8 +25,10 @@ static const GLchar vertexShaderSource[] =
         "#version 310 es\n"
         "layout (location = 0) in vec3 pos;\n"
         "layout (location = 1) in vec2 texCoords;\n"
+        "layout (location = 2) in vec3 norm;\n"
         "out vec4 vColor;\n"
         "out vec2 vTexCoords;\n"
+        "out vec3 vNorm;\n"
         "uniform mat4 model;\n"
         "uniform mat4 projection;\n"
         "uniform mat4 view;\n"
@@ -35,6 +37,7 @@ static const GLchar vertexShaderSource[] =
         "gl_Position = projection * view * model * vec4(pos, 1.0);\n"
         "vColor = vec4(clamp(pos, 0.0, 1.0), 1.0);\n"
         "vTexCoords = texCoords;\n"
+        "vNorm = mat3(transpose(inverse(model))) * norm;\n"
         "}\n";
 
 static const GLchar fragmentShaderSource[] =
@@ -42,6 +45,7 @@ static const GLchar fragmentShaderSource[] =
         "precision mediump float;\n"
         "in vec4 vColor;\n"
         "in vec2 vTexCoords;\n"
+        "in vec3 vNorm;\n"
         "out vec4 color;\n"
         "struct DirectionalLight\n"
         "{\n"
@@ -191,6 +195,32 @@ bool validateProgram(GLuint program) {
     return true;
 }
 
+void calculateAverageNormals(unsigned int *indices, unsigned int totalIndices, GLfloat *vertices, unsigned int totalVertices, unsigned int vertexLength, unsigned int normalOffset) {
+    for (size_t i = 0; i < totalIndices; i += 3) {
+        unsigned int in0 = indices[i] * vertexLength;
+        unsigned int in1 = indices[i + 1] * vertexLength;
+        unsigned int in2 = indices[i + 2] * vertexLength;
+
+        glm::vec3 v1(vertices[in1] - vertices[in0], vertices[in1 + 1] - vertices[in0 + 1], vertices[in1 + 2] - vertices[in0 + 2]);
+        glm::vec3 v2(vertices[in2] - vertices[in0], vertices[in2 + 1] - vertices[in0 + 1], vertices[in2 + 2] - vertices[in0 + 2]);
+        glm::vec3 normal = glm::cross(v1, v2);
+        normal = glm::normalize(normal);
+
+        in0 += normalOffset; in1 += normalOffset; in2 += normalOffset;
+
+        vertices[in0] += normal.x; vertices[in0 + 1] += normal.y; vertices[in0 + 2] += normal.z;
+        vertices[in1] += normal.x; vertices[in1 + 1] += normal.y; vertices[in1 + 2] += normal.z;
+        vertices[in2] += normal.x; vertices[in2 + 1] += normal.y; vertices[in2 + 2] += normal.z;
+    }
+
+    for (size_t i = 0; i < (totalVertices / vertexLength); i++) {
+        unsigned int nOffset = (i * vertexLength) + normalOffset;
+        glm::vec3 vec(vertices[nOffset], vertices[nOffset + 1], vertices[nOffset + 2]);
+        vec = glm::normalize(vec);
+        vertices[nOffset] = vec.x; vertices[nOffset + 1] = vec.y; vertices[nOffset + 2] = vec.z;
+    }
+}
+
 void createTriangle() {
     GLuint indices[] = {
             0, 1, 2,
@@ -200,12 +230,14 @@ void createTriangle() {
     };
 
     GLfloat vertices[] = {
-            0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-            -1.0f, -1.0f, 1.0f, 0.5f, 0.0f,
-            1.0f, -1.0f, 1.0f, 1.0f, 0.0f,
-            1.0f, -1.0f, -1.0f, 0.5f, 1.0f,
-            -1.0f, -1.0f, -1.0f, 0.5f, 0.5f
+            0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+            -1.0f, -1.0f, 1.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f,
+            1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+            1.0f, -1.0f, -1.0f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f,
+            -1.0f, -1.0f, -1.0f, 0.5f, 0.5f, 0.0f, 0.0f, 0.0f
     };
+
+    calculateAverageNormals(indices, 12, vertices, 40, 8, 5);
 
     glGenVertexArrays(1, &triangleVAO);
     glBindVertexArray(triangleVAO);
@@ -216,13 +248,16 @@ void createTriangle() {
 
     glGenBuffers(1, &triangleVBO);
     glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
-    glBufferData(GL_ARRAY_BUFFER, 25 * sizeof(GL_FLOAT), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 40 * sizeof(GL_FLOAT), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * 5, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * 8, 0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * 5, (void*)(sizeof(GL_FLOAT) * 3));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * 8, (void*)(sizeof(GL_FLOAT) * 3));
     glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * 8, (void*)(sizeof(GL_FLOAT) * 5));
+    glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
