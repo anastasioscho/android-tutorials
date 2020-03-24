@@ -47,6 +47,8 @@ static const GLchar fragmentShaderSource[] =
         "{\n"
         "vec3 color;\n"
         "float intensity;\n"
+        "vec3 direction;\n"
+        "float diffuseIntensity;\n"
         "};\n"
         "uniform sampler2D textureSampler;\n"
         "uniform DirectionalLight directionalLight;\n"
@@ -58,7 +60,7 @@ static const GLchar fragmentShaderSource[] =
 
 GLuint program, triangleVAO, triangleVBO, triangleIBO, texture;
 GLint uniformModel, uniformProjection, uniformView;
-GLint uniformLightColor, uniformLightIntensity;
+GLint uniformLightColor, uniformLightIntensity, uniformLightDirection, uniformDiffuseLightIntensity;
 glm::mat4 projectionMatrix;
 
 unsigned char *texture_image_data;
@@ -131,6 +133,8 @@ void createProgram() {
 
     uniformLightColor = glGetUniformLocation(program, "directionalLight.color");
     uniformLightIntensity = glGetUniformLocation(program, "directionalLight.intensity");
+    uniformLightDirection = glGetUniformLocation(program, "directionalLight.direction");
+    uniformDiffuseLightIntensity = glGetUniformLocation(program, "directionalLight.diffuseIntensity");
 
     return;
 }
@@ -267,6 +271,8 @@ extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibr
 
     glUniform3f(uniformLightColor, 1.0f, 1.0f, 1.0f);
     glUniform1f(uniformLightIntensity, 1.0f);
+    glUniform3f(uniformLightDirection, 2.0f, 0.3f, -2.0f);
+    glUniform1f(uniformDiffuseLightIntensity, 1.0f);
 
     currentAngle += angleStep;
     if (currentAngle >= 360.0f) currentAngle -= 360.0f;
