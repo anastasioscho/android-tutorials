@@ -29,6 +29,7 @@ static const GLchar vertexShaderSource[] =
         "out vec4 vColor;\n"
         "out vec2 vTexCoords;\n"
         "out vec3 vNorm;\n"
+        "out vec3 vFragPos;\n"
         "uniform mat4 model;\n"
         "uniform mat4 projection;\n"
         "uniform mat4 view;\n"
@@ -38,6 +39,7 @@ static const GLchar vertexShaderSource[] =
         "vColor = vec4(clamp(pos, 0.0, 1.0), 1.0);\n"
         "vTexCoords = texCoords;\n"
         "vNorm = mat3(transpose(inverse(model))) * norm;\n"
+        "vFragPos = (model * vec4(pos, 1.0)).xyz;\n"
         "}\n";
 
 static const GLchar fragmentShaderSource[] =
@@ -46,6 +48,7 @@ static const GLchar fragmentShaderSource[] =
         "in vec4 vColor;\n"
         "in vec2 vTexCoords;\n"
         "in vec3 vNorm;\n"
+        "in vec3 vFragPos;\n"
         "out vec4 color;\n"
         "struct DirectionalLight\n"
         "{\n"
@@ -54,19 +57,37 @@ static const GLchar fragmentShaderSource[] =
         "vec3 direction;\n"
         "float diffuseIntensity;\n"
         "};\n"
+        "struct Material\n"
+        "{\n"
+        "float specularIntensity;\n"
+        "float shininess;\n"
+        "};\n"
         "uniform sampler2D textureSampler;\n"
         "uniform DirectionalLight directionalLight;\n"
+        "uniform Material material;\n"
+        "uniform vec3 cameraPosition;\n"
         "void main()\n"
         "{\n"
         "vec4 ambientColor = vec4(directionalLight.color, 1.0f) * directionalLight.intensity;\n"
         "float diffuseFactor = max(dot(normalize(vNorm), normalize(directionalLight.direction)), 0.0f);\n"
         "vec4 diffuseColor = vec4(directionalLight.color, 1.0f) * directionalLight.diffuseIntensity * diffuseFactor;\n"
-        "color = texture(textureSampler, vTexCoords) * (ambientColor + diffuseColor);\n"
+        "vec4 specularColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);\n"
+        "if (diffuseFactor > 0.0f) {\n"
+        "vec3 fragToEye = normalize(cameraPosition - vFragPos);\n"
+        "vec3 reflectedVertex = normalize(reflect(directionalLight.direction, normalize(vNorm)));\n"
+        "float specularFactor = dot(fragToEye, reflectedVertex);\n"
+        "if (specularFactor > 0.0f) {\n"
+        "specularFactor = pow(specularFactor, material.shininess);"
+        "specularColor = vec4(directionalLight.color * material.specularIntensity * specularFactor, 1.0f);\n"
+        "}\n"
+        "}\n"
+        "color = texture(textureSampler, vTexCoords) * (ambientColor + diffuseColor + specularColor);\n"
         "}\n";
 
 GLuint program, triangleVAO, triangleVBO, triangleIBO, texture;
 GLint uniformModel, uniformProjection, uniformView;
 GLint uniformLightColor, uniformLightIntensity, uniformLightDirection, uniformDiffuseLightIntensity;
+GLint uniformMaterialSpecularIntensity, uniformMaterialShininess, uniformCameraPosition;
 glm::mat4 projectionMatrix;
 
 unsigned char *texture_image_data;
@@ -141,6 +162,10 @@ void createProgram() {
     uniformLightIntensity = glGetUniformLocation(program, "directionalLight.intensity");
     uniformLightDirection = glGetUniformLocation(program, "directionalLight.direction");
     uniformDiffuseLightIntensity = glGetUniformLocation(program, "directionalLight.diffuseIntensity");
+
+    uniformMaterialSpecularIntensity = glGetUniformLocation(program, "material.specularIntensity");
+    uniformMaterialShininess = glGetUniformLocation(program, "material.shininess");
+    uniformCameraPosition = glGetUniformLocation(program, "cameraPosition");
 
     return;
 }
@@ -329,6 +354,10 @@ extern "C" JNIEXPORT void JNICALL Java_dev_anastasioscho_glestriangle_NativeLibr
 
     glm::mat4 viewMatrix = glm::lookAt(cameraPosition, cameraTarget, worldUp);
     glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+
+    glUniform1f(uniformMaterialSpecularIntensity, 1.0f);
+    glUniform1f(uniformMaterialShininess, 32.0f);
+    glUniform3f(uniformCameraPosition, cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
